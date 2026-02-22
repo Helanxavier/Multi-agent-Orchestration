@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-multipart
+crewai
+langchain-google-genai
+google-generativeai
+pydub
+python-dotenv
