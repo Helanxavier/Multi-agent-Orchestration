@@ -1,48 +1,44 @@
-# 🏥 Patient Intake Assistant
+# 🏥 IntakeAI - Advanced Patient Intake Assistant
 
-A multimodal AI-powered patient intake system using CrewAI agents and Google Gemini.
+IntakeAI is a premium, AI-powered patient intake system that leverages **Stitch AI** for design, **Google Gemini 2.0 Flash Lite** for intelligence, and **CrewAI** agents for multimodal orchestration. 
 
-## Features
-- 🎤 Voice input transcription
-- 📄 Medical document analysis (prescriptions, lab reports)
-- 🖼 Symptom image analysis
-- ✍ Text input
-- 🤖 4 specialized AI agents
-- 📋 Structured intake form output (Markdown)
-- 🖨 Print/PDF export
+It transforms patient voice recordings, medical documents, and photos into structured, clinical-grade medical briefs ready for providers.
 
-## Agents
-1. **Intake Specialist** — Extracts symptoms and chief complaint
-2. **Document Analyst** — Reads medical documents and images
-3. **Medical History Analyst** — Organizes past history, medications, allergies
-4. **Profile Summarizer** — Generates the final structured intake form
+## 🚀 Features
+- **Premium SPA UI**: High-end medical aesthetic with seamless screen transitions.
+- **Multimodal Capture**: Supports text, voice recordings, document uploads (PDF/Images), and symptom photos.
+- **Agentic Workflow**: 4 specialized AI agents (Intake, History, Documents, and Summary) work together to synthesize data.
+- **FastAPI Backend**: Robust Python backend for real-time processing and AI orchestration.
+- **PDF Export**: Print-ready results for efficient clinic workflow.
 
-## Setup
+## 🤖 AI Agents
+1. **Intake Specialist**: Extracts immediate symptoms and chief complaints.
+2. **Document Analyst**: Deep-reads medical documents and visual symptom data.
+3. **Medical History Analyst**: Organizes past history, medication lists, and allergies.
+4. **Profile Summarizer**: Synthesizes all data into a professional clinical form.
 
-### Backend
+## 🛠 Setup & Installation
+
+### 1. Requirements
+Ensure you have Python 3.10+ installed.
+
+### 2. Install Dependencies
 ```bash
-cd backend
 pip install -r requirements.txt
-# Add your GOOGLE_API_KEY to .env
+```
+
+### 3. Environment Variables
+Create a `.env` file in the root directory and add your Google API Key:
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+```
+
+### 4. Running the Application
+Start the FastAPI server:
+```bash
 python main.py
 ```
+Open your browser and navigate to **http://localhost:8080**.
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## Usage
-1. Start backend: `python main.py` (runs on port 8000)
-2. Start frontend: `npm run dev` (runs on port 5173)
-3. Open browser at `http://localhost:5173`
-4. Provide voice/text/documents and click "Generate Intake Form"
-
-## API Endpoint
-`POST /intake`
-- `audio` (file, optional) — Voice recording
-- `text_input` (string, optional) — Typed symptoms/history
-- `documents` (files, optional) — Medical documents/images
-- `symptom_images` (files, optional) — Photos of symptoms
+---
+*Powered by Stitch AI & Gemini.*
