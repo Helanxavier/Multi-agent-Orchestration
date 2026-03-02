@@ -2,7 +2,20 @@ import os
 import time
 from google import genai
 from google.genai import types
+from google.genai.errors import ClientError
 from dotenv import load_dotenv
+from PIL import Image
+import io
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+# Define retry decorator for 429s
+def retry_on_quota(func):
+    return retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=10, min=20, max=60),
+        retry=retry_if_exception_type(ClientError),
+        before_sleep=lambda retry_state: print(f"Quota exceeded. Retrying in {retry_state.next_action.sleep}s... (Attempt {retry_state.attempt_number})")
+    )(func)
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -29,6 +42,7 @@ def convert_to_mp3(input_path):
     return output_path
 
 
+@retry_on_quota
 def transcribe_audio(audio_file_path):
     """Transcribes patient voice input using Gemini."""
     # Convert to mp3 if needed
@@ -41,7 +55,7 @@ def transcribe_audio(audio_file_path):
         audio_bytes = f.read()
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.0-flash",
         contents=[
             types.Part.from_bytes(data=audio_bytes, mime_type="audio/mp3"),
             """Transcribe this patient's spoken input accurately. 
@@ -49,6 +63,10 @@ def transcribe_audio(audio_file_path):
         Format as natural text."""
         ]
     )
+    
+    # Rate limiting for Free Tier (10 RPM) - Increased to protect 4-agent crew quota
+    print("Waiting for quota (long wait)...")
+    time.sleep(25)
 
     if converted_path != audio_file_path:
         os.remove(converted_path)
@@ -56,10 +74,11 @@ def transcribe_audio(audio_file_path):
     return response.text
 
 
-def analyze_document_image(image_path):
+@retry_on_quota
+def analyze_document_image(image_file_path):
     """Analyzes a medical document image using Gemini."""
     # Detect mime type
-    ext = image_path.rsplit(".", 1)[-1].lower()
+    ext = image_file_path.rsplit(".", 1)[-1].lower()
     mime_map = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
                 "pdf": "application/pdf", "gif": "image/gif", "webp": "image/webp"}
     mime_type = mime_map.get(ext, "image/jpeg")
@@ -68,7 +87,7 @@ def analyze_document_image(image_path):
         image_bytes = f.read()
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.0-flash",
         contents=[
             types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
             """Analyze this medical document/image and extract ALL information including:
@@ -83,10 +102,15 @@ def analyze_document_image(image_path):
         Be thorough and precise. Include all numbers, units, and medical terminology."""
         ]
     )
+    
+    # Rate limiting for Free Tier (10 RPM) - Increased to protect 4-agent crew quota
+    print("Waiting for quota (long wait)...")
+    time.sleep(25)
 
     return response.text
 
 
+@retry_on_quota
 def analyze_symptom_image(image_path):
     """Analyzes an image of a symptom (wound, rash, etc.) using Gemini."""
     ext = image_path.rsplit(".", 1)[-1].lower()
@@ -98,7 +122,7 @@ def analyze_symptom_image(image_path):
         image_bytes = f.read()
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.0-flash",
         contents=[
             types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
             """Analyze this clinical image and describe:
@@ -111,5 +135,9 @@ def analyze_symptom_image(image_path):
         Be clinically descriptive and objective."""
         ]
     )
+    
+    # Rate limiting for Free Tier (10 RPM) - Increased to protect 4-agent crew quota
+    print("Waiting for quota (long wait)...")
+    time.sleep(25)
 
     return response.text

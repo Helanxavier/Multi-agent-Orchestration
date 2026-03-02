@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -97,7 +98,7 @@ async def process_intake(
     if symptom_analyses:
         voice_text += f"\n\nSymptom Images Analysis: {' | '.join(symptom_analyses)}"
 
-    # Step 4: Run Agentic Workflow
+    # Step 4: Run Agentic Workflow (Restored 4-Agent Architecture)
     agents = PatientIntakeAgents()
     tasks = PatientIntakeTasks()
 
@@ -111,12 +112,20 @@ async def process_intake(
     t3 = tasks.extract_medical_history(history_agent, voice_text, document_analyses)
     t4 = tasks.generate_intake_form(summary_agent, [t1, t2, t3])
 
+    def rate_limit_callback(step):
+        # Mandatory 20-second delay between every agent step to stay under 10 RPM
+        print(f"\n[QUOTA] Agent {step.agent.role} finished a step. Waiting 20s for next quota window...")
+        time.sleep(20)
+
     crew = Crew(
         agents=[intake_agent, document_agent, history_agent, summary_agent],
         tasks=[t1, t2, t3, t4],
-        verbose=True
+        verbose=True,
+        step_callback=rate_limit_callback
     )
 
+    print("Waiting for quota before starting Agentic workflow...")
+    time.sleep(15)
     print("Starting CrewAI workflow...")
     result = crew.kickoff()
     print("Workflow complete!")

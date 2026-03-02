@@ -7,16 +7,17 @@ load_dotenv()
 
 class PatientIntakeAgents:
     def _get_llm(self):
+        # We use gemini-2.0-flash as it was confirmed available
         return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.0-flash",
             google_api_key=os.getenv("GOOGLE_API_KEY")
         )
 
     def intake_agent(self):
         return Agent(
             role="Patient Intake Specialist",
-            goal="Conduct a warm, professional patient intake interview. Extract personal details, chief complaint, symptoms, duration, and severity.",
-            backstory="You are an experienced medical receptionist and intake specialist. You ask clear, empathetic questions to gather complete patient information before their doctor's visit.",
+            goal="Conduct the initial patient interview and gather basic information and symptoms.",
+            backstory="You are a friendly and efficient medical assistant. Your goal is to make patients feel comfortable while accurately collecting their primary reason for the visit.",
             llm=self._get_llm(),
             verbose=True,
             allow_delegation=False
@@ -24,9 +25,9 @@ class PatientIntakeAgents:
 
     def history_agent(self):
         return Agent(
-            role="Medical History Analyst",
-            goal="Extract and organize past medical history, current medications, allergies, family history, and lifestyle factors from patient-provided documents and speech.",
-            backstory="You are a clinical data specialist who excels at extracting structured medical history from unstructured patient inputs including documents, images, and spoken descriptions.",
+            role="Medical History Researcher",
+            goal="Analyze the patient's past medical history, medications, and lifestyle factors.",
+            backstory="You are detail-oriented and thorough. You look for patterns in medical history and ensure all relevant past conditions and medications are documented.",
             llm=self._get_llm(),
             verbose=True,
             allow_delegation=False
@@ -34,9 +35,9 @@ class PatientIntakeAgents:
 
     def document_agent(self):
         return Agent(
-            role="Medical Document Analyst",
-            goal="Analyze uploaded medical documents, prescriptions, lab reports, and images to extract relevant patient information.",
-            backstory="You are an expert in reading and interpreting medical documents. You can identify medications, diagnoses, test results, and clinical notes from any medical document.",
+            role="Medical Document Specialist",
+            goal="Analyze medical documents and lab results to extract key clinical findings.",
+            backstory="You are an expert at interpreting clinical documents, lab reports, and imaging results. You focus on extracting accurate data points that are relevant to the current visit.",
             llm=self._get_llm(),
             verbose=True,
             allow_delegation=False
@@ -45,8 +46,8 @@ class PatientIntakeAgents:
     def summary_agent(self):
         return Agent(
             role="Patient Profile Summarizer",
-            goal="Synthesize all gathered patient information into a clean, structured intake form ready for the doctor.",
-            backstory="You are a clinical documentation expert who creates precise, well-organized patient profiles that help doctors quickly understand a patient's situation before the consultation.",
+            goal="Synthesize all gathered information into a structured, professional patient intake form.",
+            backstory="You are skilled at medical transcription and clinical summaries. You take complex information and organize it into a clear, concise format for the physician.",
             llm=self._get_llm(),
             verbose=True,
             allow_delegation=False
