@@ -6,3 +6,6 @@ langchain-google-genai
 google-generativeai
 pydub
 python-dotenv
+openai-whisper
+groq
+langchain-groq

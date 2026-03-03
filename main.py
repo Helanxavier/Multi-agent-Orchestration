@@ -1,6 +1,5 @@
 import os
 import shutil
-import time
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -13,6 +12,12 @@ from multimodal_tools import transcribe_audio, analyze_document_image, analyze_s
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Opt out of CrewAI telemetry to avoid default OpenAI API key checks
+os.environ["CREWAI_TELEMETRY_OPTOUT"] = "true"
+# Provide a dummy OpenAI key as a fallback for internal library checks
+if not os.environ.get("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = "NA"
 
 app = FastAPI(title="Patient Intake Assistant API")
 
@@ -51,7 +56,7 @@ async def process_intake(
     documents: Optional[List[UploadFile]] = File(None),
     symptom_images: Optional[List[UploadFile]] = File(None),
 ):
-    # Step 1: Process voice input
+    # ── Step 1: Transcribe audio (Whisper, local) ──────────────────────────
     voice_text = "No voice input provided."
     if audio:
         audio_path = os.path.join(TEMP_DIR, audio.filename)
@@ -62,11 +67,10 @@ async def process_intake(
         os.remove(audio_path)
         print(f"Transcription complete: {voice_text[:100]}...")
 
-    # Combine voice and text input
     if text_input:
         voice_text = f"{voice_text}\n\nAdditional text input: {text_input}"
 
-    # Step 2: Process medical documents
+    # ── Step 2: Analyze medical documents (Groq Vision) ────────────────────
     document_analyses = []
     if documents:
         for idx, doc in enumerate(documents):
@@ -82,7 +86,7 @@ async def process_intake(
     if not document_analyses:
         document_analyses = ["No medical documents provided."]
 
-    # Step 3: Process symptom images
+    # ── Step 3: Analyze symptom images (Groq Vision) ───────────────────────
     symptom_analyses = []
     if symptom_images:
         for idx, img in enumerate(symptom_images):
@@ -98,7 +102,7 @@ async def process_intake(
     if symptom_analyses:
         voice_text += f"\n\nSymptom Images Analysis: {' | '.join(symptom_analyses)}"
 
-    # Step 4: Run Agentic Workflow (Restored 4-Agent Architecture)
+    # ── Step 4: Run 4-Agent CrewAI Workflow (Groq, no delays!) ────────────
     agents = PatientIntakeAgents()
     tasks = PatientIntakeTasks()
 
@@ -112,21 +116,16 @@ async def process_intake(
     t3 = tasks.extract_medical_history(history_agent, voice_text, document_analyses)
     t4 = tasks.generate_intake_form(summary_agent, [t1, t2, t3])
 
-    def rate_limit_callback(step):
-        # Mandatory 20-second delay between every agent step to stay under 10 RPM
-        print(f"\n[QUOTA] Agent {step.agent.role} finished a step. Waiting 20s for next quota window...")
-        time.sleep(20)
-
     crew = Crew(
         agents=[intake_agent, document_agent, history_agent, summary_agent],
         tasks=[t1, t2, t3, t4],
         verbose=True,
-        step_callback=rate_limit_callback
+        # ✅ No more step_callback or sleep delays needed!
+        manager_llm=agents.get_llm()
     )
 
-    print("Waiting for quota before starting Agentic workflow...")
-    time.sleep(15)
-    print("Starting CrewAI workflow...")
+
+    print("Starting CrewAI workflow (Groq powered)...")
     result = crew.kickoff()
     print("Workflow complete!")
 
