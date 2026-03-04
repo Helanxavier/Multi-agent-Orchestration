@@ -13,11 +13,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Opt out of CrewAI telemetry to avoid default OpenAI API key checks
-os.environ["CREWAI_TELEMETRY_OPTOUT"] = "true"
-# Provide a dummy OpenAI key as a fallback for internal library checks
-if not os.environ.get("OPENAI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = "NA"
+# Provide environment variables to redirect ALL internal OpenAI calls to Groq
+# This is the most robust way to avoid 'NA' key errors and LangChain attribute mismatches.
+os.environ["OPENAI_BASE_URL"] = "https://api.groq.com/openai/v1"
+os.environ["OPENAI_MODEL_NAME"] = "llama-3.3-70b-versatile"
+
+# Ensure the OpenAI key is the Groq key to satisfy internal checks
+groq_key = os.getenv("GROQ_API_KEY")
+if groq_key:
+    os.environ["OPENAI_API_KEY"] = groq_key
 
 app = FastAPI(title="Patient Intake Assistant API")
 
@@ -121,7 +125,6 @@ async def process_intake(
         tasks=[t1, t2, t3, t4],
         verbose=True,
         # ✅ No more step_callback or sleep delays needed!
-        manager_llm=agents.get_llm()
     )
 
 

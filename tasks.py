@@ -5,41 +5,42 @@ class PatientIntakeTasks:
     def extract_basic_info(self, agent, voice_text):
         return Task(
             description=f"""
-            Analyze the following patient voice/text input and extract:
+            Analyze the patient input (voice transcription and any symptom image analysis) and extract:
             - Full name
             - Age and date of birth
             - Gender
-            - Contact information (if mentioned)
-            - Chief complaint (main reason for visit)
-            - Symptom description
-            - Duration of symptoms
-            - Severity (1-10 scale if possible)
-            - Any urgent/emergency flags
+            - Chief complaint
+            - Symptom description (incorporate visual findings from image analysis if present)
+            - Duration and Severity
+            - Urgent/emergency flags
 
-            Patient Input: {voice_text}
+            Input Data: {voice_text}
 
-            If information is missing, note it as 'Not provided'.
+            IMPORTANT: ONLY extract information that is explicitly mentioned. Do NOT use placeholders like 'Not provided'. 
+            If a field is missing, simply omit it from your extraction.
             """,
-            expected_output="A structured JSON-like summary of the patient's basic information and chief complaint.",
+            expected_output="A structured summary of the patient's identity and primary reason for the visit, prioritizing visual symptom data if available.",
             agent=agent
         )
 
     def extract_medical_history(self, agent, voice_text, document_analysis):
         return Task(
             description=f"""
-            Based on the patient input and document analysis, extract and organize:
-            - Past medical conditions/diagnoses
-            - Previous surgeries or hospitalizations
-            - Current medications (name, dosage, frequency)
-            - Known allergies (medications, food, environmental)
-            - Family medical history
-            - Lifestyle factors (smoking, alcohol, exercise)
-            - Vaccination history (if mentioned)
-
+            Synthesize medical history from:
             Patient Input: {voice_text}
             Document Analysis: {document_analysis}
+
+            Extract ONLY confirmed information regarding:
+            - Past conditions
+            - Surgeries
+            - Medications (Name, dose, frequency)
+            - Allergies
+            - Family history
+            - Lifestyle (Smoking/Alcohol)
+
+            Omit any category where no information is provided. Do NOT use 'None mentioned' or similar placeholders.
             """,
-            expected_output="A comprehensive medical history summary organized by category.",
+            expected_output="A concise medical history summary containing only confirmed patient data.",
             agent=agent
         )
 
@@ -64,24 +65,19 @@ class PatientIntakeTasks:
     def generate_intake_form(self, agent, context):
         return Task(
             description="""
-            Using all gathered information, generate a complete, professional patient intake form with these sections:
+            Assemble the final professional medical intake form.
+            
+            CRITICAL RULES:
+            1. ONLY include sections where information was actually provided.
+            2. If 'PATIENT DEMOGRAPHICS' only has Age, only show Age. Omit 'Full Name' if missing.
+            3. If 'MEDICAL HISTORY' is empty, OMIT the entire section.
+            4. Do NOT use placeholders like 'Not provided', 'None', or 'Not mentioned'.
+            5. Ensure 'SYMPTOM DESCRIPTION' integrates findings from any uploaded symptom images (e.g., redness, rash).
+            6. Use clean Markdown headers.
 
-            1. PATIENT DEMOGRAPHICS
-            2. CHIEF COMPLAINT & SYMPTOMS
-            3. SYMPTOM TIMELINE
-            4. MEDICAL HISTORY
-            5. CURRENT MEDICATIONS
-            6. ALLERGIES
-            7. FAMILY HISTORY
-            8. LIFESTYLE & SOCIAL HISTORY
-            9. DOCUMENTS REVIEWED
-            10. FLAGS & URGENT NOTES
-            11. DOCTOR BRIEFING SUMMARY
-
-            Format it cleanly in Markdown. Be precise and clinically appropriate.
-            Mark any missing information clearly. Flag any urgent concerns in red (use **⚠️ URGENT:** prefix).
+            The goal is a 'high-signal' report that only contains useful data for the doctor.
             """,
-            expected_output="A complete, structured patient intake form in Markdown format ready for the doctor.",
+            expected_output="A clean, concise professional medical brief in Markdown that omits empty sections and placeholders.",
             agent=agent,
             context=context
         )

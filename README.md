@@ -1,21 +1,21 @@
 # 🏥 IntakeAI - Advanced Patient Intake Assistant
 
-IntakeAI is a premium, AI-powered patient intake system that leverages **Stitch AI** for design, **Google Gemini 2.0 Flash Lite** for intelligence, and **CrewAI** agents for multimodal orchestration. 
+IntakeAI is a premium, AI-powered patient intake system that leverages **Groq (Llama-3.3-70B)** for medical intelligence, **OpenAI Whisper (Local)** for voice transcription, and **CrewAI** agents for multimodal orchestration. 
 
-It transforms patient voice recordings, medical documents, and photos into structured, clinical-grade medical briefs ready for providers.
+It transforms patient voice recordings, medical documents (PDF/DOCX/TXT), and photos into highly structured, clinical-grade medical briefs ready for providers.
 
-## 🚀 Features
-- **Premium SPA UI**: High-end medical aesthetic with seamless screen transitions.
-- **Multimodal Capture**: Supports text, voice recordings, document uploads (PDF/Images), and symptom photos.
-- **Agentic Workflow**: 4 specialized AI agents (Intake, History, Documents, and Summary) work together to synthesize data.
-- **FastAPI Backend**: Robust Python backend for real-time processing and AI orchestration.
-- **PDF Export**: Print-ready results for efficient clinic workflow.
+## 🚀 Key Improvements
+- **Clinical Intelligence**: Powered by **Llama-3.3-70B-Versatile** on Groq for sub-second analysis.
+- **Privacy-First Voice**: Transcribes locally using **Whisper**, ensuring patient voice data stays on-device.
+- **High-Signal Summary**: Intelligent reporting that omits missing info and prioritizes visual symptom evidence.
+- **Premium SPA UI**: Clean, medical-grade aesthetic with professional print/PDF alignment.
+- **Restricted Tooling**: Professional medical file handling for PDF, Word, and Text documents.
 
 ## 🤖 AI Agents
-1. **Intake Specialist**: Extracts immediate symptoms and chief complaints.
-2. **Document Analyst**: Deep-reads medical documents and visual symptom data.
-3. **Medical History Analyst**: Organizes past history, medication lists, and allergies.
-4. **Profile Summarizer**: Synthesizes all data into a professional clinical form.
+1. **Intake Specialist**: Extracts immediate symptoms and prioritizes visual findings from Groq Vision analysis.
+2. **Document Analyst**: Extracts structured data from PDF and Word documents with high precision.
+3. **Medical History Analyst**: Synthesizes history and medication lists without using generic placeholders.
+4. **Profile Summarizer**: Produces a clean, concise Markdown report for the doctor.
 
 ## 🛠 Setup & Installation
 
@@ -28,9 +28,9 @@ pip install -r requirements.txt
 ```
 
 ### 3. Environment Variables
-Create a `.env` file in the root directory and add your Google API Key:
+Create a `.env` file in the root directory and add your Groq API Key:
 ```env
-GOOGLE_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 ### 4. Running the Application
@@ -41,4 +41,4 @@ python main.py
 Open your browser and navigate to **http://localhost:8080**.
 
 ---
-*Powered by Stitch AI & Gemini.*
+*Powered by Groq & Whisper.*

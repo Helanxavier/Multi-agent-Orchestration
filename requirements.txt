@@ -9,3 +9,5 @@ python-dotenv
 openai-whisper
 groq
 langchain-groq
+pdfplumber
+python-docx

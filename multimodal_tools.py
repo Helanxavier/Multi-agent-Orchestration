@@ -30,64 +30,64 @@ def transcribe_audio(audio_file_path):
 
 
 # ─────────────────────────────────────────────
-# 📄 DOCUMENT ANALYSIS — Groq Vision (Free)
+# 📄 DOCUMENT ANALYSIS — PDF, Word, Text
 # ─────────────────────────────────────────────
-def analyze_document_image(image_file_path):
+def analyze_document_image(file_path):
     """
-    Analyzes a medical document image using Groq Vision (Llama 4 Scout).
-    Free tier with generous limits.
+    Analyzes a medical document (PDF, Word, or Text) by extracting text
+    and summarizing it using Groq.
     """
     try:
         from groq import Groq
     except ImportError:
         raise ImportError("Please run: pip install groq")
 
+    ext = file_path.rsplit(".", 1)[-1].lower()
+    text = ""
+
+    try:
+        if ext == 'pdf':
+            import pdfplumber
+            with pdfplumber.open(file_path) as pdf:
+                text = "\n".join(page.extract_text() for page in pdf.pages if page.extract_text())
+        elif ext in ['doc', 'docx']:
+            import docx
+            doc = docx.Document(file_path)
+            text = "\n".join([para.text for para in doc.paragraphs])
+        elif ext == 'txt':
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                text = f.read()
+        else:
+            return f"Unsupported file extension: {ext}"
+    except Exception as e:
+        return f"Error extracting text from {ext} file: {str(e)}"
+
+    if not text.strip():
+        return "No text could be extracted from the document."
+
+    print(f"Analyzing extracted text from {ext} with Groq...")
+
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-    # Detect mime type
-    ext = image_file_path.rsplit(".", 1)[-1].lower()
-    mime_map = {
-        "jpg": "image/jpeg",
-        "jpeg": "image/jpeg",
-        "png": "image/png",
-        "gif": "image/gif",
-        "webp": "image/webp",
-        "pdf": "image/jpeg"  # for PDFs, convert first page to image if needed
-    }
-    mime_type = mime_map.get(ext, "image/jpeg")
-
-    # Read and encode image
-    with open(image_file_path, "rb") as f:
-        image_data = base64.b64encode(f.read()).decode("utf-8")
-
-    print(f"Analyzing document with Groq Vision: {image_file_path}")
-
+    
+    # Using a powerful text model for clinical analysis
     response = client.chat.completions.create(
-        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        model="llama-3.3-70b-versatile",
         messages=[
             {
+                "role": "system", 
+                "content": "You are a Clinical Document Analyst. Your goal is to extract structured medical information from raw document text."
+            },
+            {
                 "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:{mime_type};base64,{image_data}"
-                        }
-                    },
-                    {
-                        "type": "text",
-                        "text": """Analyze this medical document/image and extract ALL information including:
-- Patient name and details
-- Medications, dosages, and instructions
-- Diagnoses and conditions
-- Lab results and values
-- Doctor's notes and recommendations
-- Dates and visit information
-- Any other clinically relevant information
+                "content": f"""Analyze this extracted medical document text and isolate:
+- Patient info
+- Medications & Dosages
+- Diagnoses
+- Lab values
+- Next steps/Recommendations
 
-Be thorough and precise. Include all numbers, units, and medical terminology."""
-                    }
-                ]
+Text:
+{text[:8000]}""" # Limit to 8000 chars for safety
             }
         ],
         max_tokens=1024
